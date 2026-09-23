@@ -23,6 +23,9 @@ xy = np.vstack([x, y])       # shape (2, n), one column per vertex
 diff = xy[:, 1:] - xy[:, :-1]  # shape (2, n-1), edge vectors x_{i+1} - x_i
 
 ### YOUR CODE TO COMPUTE GRADIENT HERE ###
+diff_normalized = diff / np.linalg.norm(diff, axis=0)
+tan_xy = diff_normalized [:, :-1] + diff_normalized[:, 1:]
+u, v = tan_xy [0, :], tan_xy [1, :]
 ### END HOMEWORK PROBLEM ###
 
 plt.figure()
@@ -36,6 +39,13 @@ plt.title("Problem 2(c): gradient of arc length at each vertex")
 kappa = np.zeros(n - 2)      # per-vertex (unsigned) discrete curvature
 
 ### YOUR CODE TO COMPUTE KAPPA HERE ###
+u = diff_normalized[:, :-1] # following the convention in the notes
+v = -diff_normalized[:, 1:] # following the contention in the notes
+variation = u + v
+
+kappa_denom = np.linalg.norm(variation , axis=0)     # per-vertex (unsigned) discrete curvature
+L = np.linalg.norm(diff, axis=0)
+kappa = 2 * kappa_denom / (L[:-1] + L[:1])
 ### END HOMEWORK PROBLEM ###
 
 # Curve colored by kappa (MATLAB's surface/'edgecolor','interp' trick -> LineCollection)
@@ -60,6 +70,7 @@ t0 = 0.0
 t1 = np.pi * 1.25
 nSamples = 100
 nSteps = 20
+h = 0.01                      # step size of the gradient descent
 
 # We provide a few examples of curves to try (each returns an (nSamples, 2) array)
 # curveFunction = lambda t: np.column_stack([np.cos(t) - np.cos(3 * t) ** 3, np.sin(t) - np.sin(3 * t) ** 3])
@@ -75,6 +86,12 @@ plt.axis("equal")
 plt.title("Problem 2(e): curve-shortening by gradient descent")
 for i in range(nSteps):
     ### YOUR CODE HERE TO PERFORM GRADIENT DESCENT ###
+    diff = curve[1:] - curve[:-1]                                 # (n-1, 2) edge vectors x_{i+1} - x_i
+    diff_normalized = diff / np.linalg.norm(diff, axis=1, keepdims=True)
+    u = diff_normalized[:-1]     # following the convention in the notes
+    v = -diff_normalized[1:]     # following the convention in the notes
+    variation = u + v            # (n-2, 2) gradient of s at the interior vertices
+    curve[1:-1] -= h * variation
     ### END HOMEWORK PROBLEM ###
     plt_line.set_xdata(curve[:, 0])
     plt_line.set_ydata(curve[:, 1])
