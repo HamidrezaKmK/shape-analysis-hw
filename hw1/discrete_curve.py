@@ -68,8 +68,9 @@ ax.set_title("Problem 2(d): curve colored by discrete curvature")
 t0 = 0.0
 t1 = np.pi * 1.25
 nSamples = 100
-nSteps = 20
-h = 0.04                      # step size: largest that still shortens the parabola in 20 steps (0.07 blows up)
+nSteps = 2000
+h = 0.005                     # step size: the largest that keeps the length decreasing for all 2000 steps (0.01 wobbles after step 820)
+drawEvery = 20                # redraw (and keep a GIF frame) every drawEvery steps
 
 # We provide a few examples of curves to try (each returns an (nSamples, 2) array)
 # curveFunction = lambda t: np.column_stack([np.cos(t) - np.cos(3 * t) ** 3, np.sin(t) - np.sin(3 * t) ** 3])
@@ -83,7 +84,7 @@ fig = plt.figure()
 (plt_line,) = plt.plot(curve[:, 0], curve[:, 1], "k", linewidth=2)
 plt.axis("equal")
 plt.title("Problem 2(e): curve-shortening by gradient descent")
-frames = [curve.copy()]      # one copy per step so the animation can be saved after the loop
+frames = [curve.copy()]      # one copy per drawn step so the animation can be saved after the loop
 for i in range(nSteps):
     ### YOUR CODE HERE TO PERFORM GRADIENT DESCENT ###
     diff = curve[1:] - curve[:-1]                                 # (n-1, 2) edge vectors x_{i+1} - x_i
@@ -93,11 +94,12 @@ for i in range(nSteps):
     variation = u + v            # (n-2, 2) gradient of s at the interior vertices
     curve[1:-1] -= h * variation
     ### END HOMEWORK PROBLEM ###
-    plt_line.set_xdata(curve[:, 0])
-    plt_line.set_ydata(curve[:, 1])
-    fig.canvas.draw()
-    plt.pause(0.05)
-    frames.append(curve.copy())
+    if (i + 1) % drawEvery == 0:
+        plt_line.set_xdata(curve[:, 0])
+        plt_line.set_ydata(curve[:, 1])
+        fig.canvas.draw()
+        plt.pause(0.05)
+        frames.append(curve.copy())
 
 # discreteCurve.m only animates the figure window with drawnow. When this script runs
 # without a display (MPLBACKEND=Agg) nothing is shown, so the same frames are also saved as a GIF.
@@ -109,7 +111,7 @@ def _draw(k):
     plt_line.set_data(frames[k][:, 0], frames[k][:, 1])
     return (plt_line,)
 anim = FuncAnimation(fig, _draw, frames=len(frames), blit=True)
-anim.save("outputs/discrete_curve-p2e-shortening.gif", writer=PillowWriter(fps=10))
+anim.save("outputs/discrete_curve-p2e-shortening.gif", writer=PillowWriter(fps=12))   # 101 frames, about 8 s
 
 plt.ioff()
 plt.show()
