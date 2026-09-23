@@ -30,8 +30,7 @@ u, v = tan_xy [0, :], tan_xy [1, :]
 
 plt.figure()
 plt.plot(x, y, linewidth=2, color="black")
-plt.quiver(x[1:-1], y[1:-1], u, v, angles="xy", scale_units="xy", scale=1,
-           linewidth=1, color="red")
+plt.quiver(x[1:-1], y[1:-1], u, v, linewidth=1, color="red")  # autoscaled like MATLAB's quiver
 plt.axis("equal")
 plt.title("Problem 2(c): gradient of arc length at each vertex")
 
@@ -70,7 +69,7 @@ t0 = 0.0
 t1 = np.pi * 1.25
 nSamples = 100
 nSteps = 20
-h = 0.01                      # step size of the gradient descent
+h = 0.04                      # step size: largest that still shortens the parabola in 20 steps (0.07 blows up)
 
 # We provide a few examples of curves to try (each returns an (nSamples, 2) array)
 # curveFunction = lambda t: np.column_stack([np.cos(t) - np.cos(3 * t) ** 3, np.sin(t) - np.sin(3 * t) ** 3])
@@ -84,6 +83,7 @@ fig = plt.figure()
 (plt_line,) = plt.plot(curve[:, 0], curve[:, 1], "k", linewidth=2)
 plt.axis("equal")
 plt.title("Problem 2(e): curve-shortening by gradient descent")
+frames = [curve.copy()]      # one copy per step so the animation can be saved after the loop
 for i in range(nSteps):
     ### YOUR CODE HERE TO PERFORM GRADIENT DESCENT ###
     diff = curve[1:] - curve[:-1]                                 # (n-1, 2) edge vectors x_{i+1} - x_i
@@ -97,6 +97,19 @@ for i in range(nSteps):
     plt_line.set_ydata(curve[:, 1])
     fig.canvas.draw()
     plt.pause(0.05)
+    frames.append(curve.copy())
+
+# discreteCurve.m only animates the figure window with drawnow. When this script runs
+# without a display (MPLBACKEND=Agg) nothing is shown, so the same frames are also saved as a GIF.
+import os
+from matplotlib.animation import FuncAnimation, PillowWriter
+
+os.makedirs("outputs", exist_ok=True)
+def _draw(k):
+    plt_line.set_data(frames[k][:, 0], frames[k][:, 1])
+    return (plt_line,)
+anim = FuncAnimation(fig, _draw, frames=len(frames), blit=True)
+anim.save("outputs/discrete_curve-p2e-shortening.gif", writer=PillowWriter(fps=10))
 
 plt.ioff()
 plt.show()
